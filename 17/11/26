@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tatami Master - Multi-Sala</title>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #000; overflow: hidden; font-family: 'Chakra Petch', sans-serif; color: #fff; user-select: none; }
+        * { box-sizing: border-box; }
+        .hidden { display: none !important; }
+
+        /* OVERLAY TV */
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 99999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        .big-btn {
+            background: #fff; color: #000; border: 4px solid #fff;
+            padding: 30px 60px; font-size: 2rem; border-radius: 20px; font-weight: bold;
+            text-transform: uppercase; text-align: center;
+        }
+
+        /* PANTALLA TV */
+        #page-gym { width: 100vw; height: 100vh; display: flex; flex-direction: column; background-color: #000; color: #fff; }
+        .gym-top { height: 15vh; display: flex; justify-content: space-between; align-items: center; padding: 0 4vw; border-bottom: 2px solid #111; }
+        .gym-logo-img { height: 80%; max-width: 30vw; object-fit: contain; }
+        .room-tag { font-size: 2.5vh; color: #666; font-weight: bold; }
+
+        .gym-center { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .gym-status { font-size: 4vh; letter-spacing: 4px; border: 2px solid #fff; padding: 5px 25px; border-radius: 50px; font-weight: bold; text-transform: uppercase; margin-bottom: 2vh; }
+        .gym-timer { font-size: 26vw; line-height: 0.85; font-weight: bold; font-family: 'Chakra Petch', monospace; }
+        .gym-bottom { height: 15vh; display: flex; justify-content: space-between; align-items: flex-end; padding: 2vh 4vw; font-size: 3.5vh; color: #888; font-weight: bold; }
+
+        #page-gym.mode-rest { background-color: #fff; color: #000; }
+        #page-gym.mode-rest .gym-status { color: #000; border-color: #000; }
+        #page-gym.mode-rest .gym-bottom { color: #000; }
+
+        /* VISTA ADMIN (MÓVIL) */
+        #admin-view {
+            display: none; font-family: 'Inter', sans-serif; background: #09090b; color: white;
+            min-height: 100vh; width: 100vw; overflow-y: auto; flex-direction: column; padding: 15px;
+        }
+        .room-selector-card { background: #18181b; border: 1px solid #27272a; padding: 15px; border-radius: 14px; margin-bottom: 15px; text-align: center; }
+        .room-selector-card input { background: #09090b; border: 1px solid #3f3f46; color: #38bdf8; padding: 10px; width: 80%; text-align: center; border-radius: 8px; font-size: 1.2rem; font-weight: bold; text-transform: uppercase; margin-top: 5px; }
+
+        .monitor-card { background: #18181b; border: 1px solid #27272a; padding: 15px; border-radius: 14px; text-align: center; margin-bottom: 15px; }
+        .monitor-timer { font-size: 3rem; font-family: 'Chakra Petch', sans-serif; font-weight: bold; }
+        
+        .ctrl-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+        .c-btn { padding: 18px 10px; border: none; border-radius: 12px; font-size: 0.9rem; font-weight: 900; color: white; cursor: pointer; text-transform: uppercase; }
+        .c-green { background: #fff; color: #000; }
+        .c-yellow { background: #27272a; color: #fff; border: 1px solid #3f3f46; }
+        .c-red { background: #ef4444; color: #fff; }
+
+        .settings-card { background: #18181b; border: 1px solid #27272a; padding: 20px; border-radius: 14px; margin-bottom: 15px; }
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 0.8rem; color: #a1a1aa; margin-bottom: 4px; font-weight: bold; }
+        .input-group input { width: 100%; background: #09090b; border: 1px solid #3f3f46; color: white; padding: 10px; border-radius: 8px; font-size: 1rem; }
+        .save-btn { width: 100%; padding: 16px; background: #fff; color: #000; border: none; border-radius: 10px; font-weight: 900; text-transform: uppercase; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- VISTA TV -->
+    <div id="tv-view">
+        <div id="overlay" onclick="activarAudio()">
+            <div class="big-btn">CLICK PARA INICIAR TATAMI</div>
+        </div>
+        <div id="page-gym">
+            <div class="gym-top">
+                <img id="gymLogo" src="" alt="Logo" class="gym-logo-img">
+                <div id="tvRoomDisplay" class="room-tag">SALA: TATAMI-1</div>
+            </div>
+            <div class="gym-center">
+                <div id="gymStatus" class="gym-status">LISTO</div>
+                <div id="gymTimer" class="gym-timer">05:00</div>
+            </div>
+            <div class="gym-bottom">
+                <div id="gymRound">ROUND 1 / 5</div>
+                <div id="gymClock">00:00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA ADMIN -->
+    <div id="admin-view">
+        <div class="room-selector-card">
+            <label style="font-size:0.8rem; color:#a1a1aa; font-weight:bold;">CÓDIGO DE SALA / TATAMI:</label>
+            <br>
+            <input type="text" id="inputRoom" value="TATAMI-1" onchange="cambiarSalaAdmin()">
+        </div>
+
+        <div class="monitor-card">
+            <div id="admStatus" style="color:#71717a; font-size:0.75rem; font-weight:bold;">LISTO</div>
+            <div id="admTimer" class="monitor-timer">05:00</div>
+            <div id="admRound" style="color:#a1a1aa; font-size:0.85rem; font-weight:bold;">ROUND 1 / 5</div>
+        </div>
+
+        <div class="ctrl-grid">
+            <button class="c-btn c-green" onclick="accion('start')">INICIAR</button>
+            <button class="c-btn c-yellow" onclick="accion('pause')">PAUSA</button>
+            <button class="c-btn c-red" onclick="accion('reset')">RESET</button>
+        </div>
+
+        <div class="settings-card">
+            <div class="input-group">
+                <label>URL del Logo de este Gimnasio</label>
+                <input type="text" id="inputLogo" placeholder="https://.../logo.png">
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="input-group">
+                    <label>Lucha (min)</label>
+                    <input type="number" id="tWork" value="5">
+                </div>
+                <div class="input-group">
+                    <label>Descanso (min)</label>
+                    <input type="number" id="tRest" value="1">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Total Rounds</label>
+                <input type="number" id="tRounds" value="5">
+            </div>
+            <button class="save-btn" onclick="guardarConfigYLogo()">GUARDAR CAMBIOS</button>
+        </div>
+    </div>
+
+    <!-- FIREBASE SDK V8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // ⚠️ PEGA TUS CREDENCIALES DE FIREBASE AQUÍ
+        var firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "tu-proyecto.firebaseapp.com",
+            databaseURL: "https://tu-proyecto-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "tu-proyecto",
+            storageBucket: "tu-proyecto.appspot.com",
+            messagingSenderId: "MESSAGING_ID",
+            appId: "APP_ID"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        var db = firebase.database();
+
+        var isAdmin = window.location.search.indexOf('admin') > -1;
+        
+        // Obtener sala desde localStorage o URL, por defecto TATAMI-1
+        var currentRoom = localStorage.getItem('tatami_room') || 'TATAMI-1';
+
+        if (isAdmin) {
+            document.getElementById('tv-view').style.display = 'none';
+            document.getElementById('admin-view').style.display = 'flex';
+            document.getElementById('inputRoom').value = currentRoom;
+        } else {
+            document.getElementById('tvRoomDisplay').innerText = "SALA: " + currentRoom;
+        }
+
+        var roomRef = db.ref('salas/' + currentRoom);
+
+        var audioCtx = null;
+        var serverOffset = 0;
+        var masterInterval = null;
+        var lastBeepedSec = -1;
+        var lastPhase = '';
+
+        db.ref(".info/serverTimeOffset").on("value", function(snap){ serverOffset = snap.val() || 0; });
+
+        setInterval(function(){
+            var d = new Date();
+            var t = (d.getHours()<10?'0':'')+d.getHours() + ":" + (d.getMinutes()<10?'0':'')+d.getMinutes();
+            var el = document.getElementById('gymClock');
+            if(el) el.innerText = t;
+        }, 1000);
+
+        function activarAudio() {
+            document.getElementById('overlay').style.display = 'none';
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                var o = audioCtx.createOscillator();
+                o.connect(audioCtx.destination);
+                o.start(); o.stop(audioCtx.currentTime + 0.01);
+            } catch(e){}
+        }
+
+        function playBeep(freq, duration, type) {
+            if(!audioCtx) return;
+            try {
+                var o = audioCtx.createOscillator();
+                var g = audioCtx.createGain();
+                o.type = type || 'sine'; o.frequency.value = freq;
+                o.connect(g); g.connect(audioCtx.destination);
+                o.start(); o.stop(audioCtx.currentTime + duration);
+            } catch(e){}
+        }
+
+        function cambiarSalaAdmin() {
+            var nuevaSala = document.getElementById('inputRoom').value.trim().toUpperCase();
+            if(nuevaSala) {
+                localStorage.setItem('tatami_room', nuevaSala);
+                location.reload();
+            }
+        }
+
+        // Sincronización en tiempo real de la sala actual
+        roomRef.on('value', function(snapshot) {
+            var data = snapshot.val();
+            if(!data) {
+                roomRef.set({
+                    logoUrl: '',
+                    estado: 'stop', fase: 'work', ronda: 1, totalRounds: 5,
+                    confWork: 5, confRest: 1, tiempoRestante: 300, inicio: 0
+                });
+                return;
+            }
+
+            if(data.logoUrl) {
+                document.getElementById('gymLogo').src = data.logoUrl;
+                if(isAdmin && document.getElementById('inputLogo').value === '') {
+                    document.getElementById('inputLogo').value = data.logoUrl;
+                }
+            } else {
+                document.getElementById('gymLogo').src = '';
+            }
+
+            if(!isAdmin) {
+                var gymPage = document.getElementById('page-gym');
+                if(data.fase === 'rest') {
+                    gymPage.classList.add('mode-rest');
+                    document.getElementById('gymStatus').innerText = "DESCANSO";
+                } else {
+                    gymPage.classList.remove('mode-rest');
+                    document.getElementById('gymStatus').innerText = data.estado === 'pause' ? "PAUSA" : (data.estado === 'stop' ? "LISTO" : "COMBATE");
+                }
+                document.getElementById('gymRound').innerText = "ROUND " + (data.ronda || 1) + " / " + (data.totalRounds || 5);
+            } else {
+                var stTextAdm = data.estado === 'pause' ? "EN PAUSA" : (data.estado === 'stop' ? "LISTO" : (data.fase === 'rest' ? "DESCANSO" : "COMBATE"));
+                document.getElementById('admStatus').innerText = "ESTADO: " + stTextAdm;
+                document.getElementById('admRound').innerText = "ROUND " + (data.ronda || 1) + " / " + (data.totalRounds || 5);
+                document.getElementById('tWork').value = data.confWork || 5;
+                document.getElementById('tRest').value = data.confRest || 1;
+                document.getElementById('tRounds').value = data.totalRounds || 5;
+            }
+
+            if(lastPhase !== data.fase) {
+                lastBeepedSec = -1;
+                if(!isAdmin && data.estado === 'run') {
+                    playBeep(800, 0.3, 'square');
+                    setTimeout(function(){ playBeep(800, 0.3, 'square'); }, 400);
+                    setTimeout(function(){ playBeep(800, 1.2, 'square'); }, 800);
+                }
+            }
+            lastPhase = data.fase;
+
+            if(masterInterval) clearInterval(masterInterval);
+            
+            masterInterval = setInterval(function() {
+                var now = Date.now() + serverOffset;
+                var rem = 0;
+
+                if(data.estado === 'run') {
+                    var elapsed = Math.floor((now - data.inicio) / 1000);
+                    var totalSec = (data.fase === 'work' ? data.confWork : data.confRest) * 60;
+                    rem = totalSec - elapsed;
+
+                    if(!isAdmin && rem <= 10 && rem > 0 && rem !== lastBeepedSec) {
+                        playBeep(600, 0.1, 'sine');
+                        lastBeepedSec = rem;
+                    }
+
+                    if(rem <= 0) {
+                        rem = 0;
+                        if(isAdmin) ejecutarCambioAutomatico(data);
+                    }
+                } else {
+                    rem = data.tiempoRestante !== undefined ? data.tiempoRestante : (data.confWork * 60);
+                }
+
+                pintarReloj(Math.max(0, rem));
+            }, 100);
+        });
+
+        function pintarReloj(s) {
+            var m = (Math.floor(s/60)<10?'0':'')+Math.floor(s/60);
+            var sc = (Math.floor(s%60)<10?'0':'')+Math.floor(s%60);
+            var txt = m + ":" + sc;
+            if(document.getElementById('gymTimer')) document.getElementById('gymTimer').innerText = txt;
+            if(document.getElementById('admTimer')) document.getElementById('admTimer').innerText = txt;
+        }
+
+        window.accion = function(type) {
+            roomRef.once('value').then(function(snap){
+                var d = snap.val();
+                var now = Date.now() + serverOffset;
+                var u = {};
+
+                if(type === 'start') {
+                    playBeep(600, 0.1, 'sine');
+                    var dur = (d.fase === 'work' ? d.confWork : d.confRest) * 60;
+                    var ini = firebase.database.ServerValue.TIMESTAMP;
+                    if(d.estado === 'pause') ini = now - ((dur - d.tiempoRestante) * 1000);
+                    u.estado = 'run'; u.inicio = ini;
+                } else if(type === 'pause') {
+                    var elap = Math.floor((now - d.inicio) / 1000);
+                    var tot = (d.fase === 'work' ? d.confWork : d.confRest) * 60;
+                    u.estado = 'pause'; u.tiempoRestante = Math.max(0, tot - elap);
+                } else if(type === 'reset') {
+                    u.estado = 'stop'; u.fase = 'work'; u.ronda = 1; u.tiempoRestante = d.confWork * 60;
+                }
+                roomRef.update(u);
+            });
+        }
+
+        window.guardarConfigYLogo = function() {
+            var logoUrl = document.getElementById('inputLogo').value.trim();
+            var w = parseFloat(document.getElementById('tWork').value) || 5;
+            var r = parseFloat(document.getElementById('tRest').value) || 1;
+            var rounds = parseInt(document.getElementById('tRounds').value) || 5;
+
+            roomRef.update({
+                logoUrl: logoUrl,
+                confWork: w, confRest: r, totalRounds: rounds,
+                estado: 'stop', fase: 'work', ronda: 1, tiempoRestante: w * 60
+            });
+            alert("¡Configuración guardada para esta sala!");
+        }
+
+        function ejecutarCambioAutomatico(d) {
+            var nf = d.fase === 'work' ? 'rest' : 'work';
+            var nr = d.ronda;
+            if(d.fase === 'rest') nr++;
+            if(nr > d.totalRounds) {
+                roomRef.update({ estado: 'stop', fase: 'work', ronda: 1, tiempoRestante: d.confWork * 60 });
+                return;
+            }
+            roomRef.update({ estado: 'run', fase: nf, ronda: nr, inicio: firebase.database.ServerValue.TIMESTAMP });
+        }
+    </script>
+</body>
+</html>
